@@ -270,7 +270,7 @@ Consists of two gated D latches, connected in series and both connected to the s
    \end{tabular}
     \end{center}
 \end{multicols}
-\subsection{Verilog}
+\subsection{SystemVerilog}
 \subsubsection{Logic Operators}
 \begin{center}
     \begin{tabular}{c|c||c|c}
@@ -291,70 +291,83 @@ Consists of two gated D latches, connected in series and both connected to the s
     \item \verb!bitwise! operators 
     \item \verb!blocking assignment =!: executed in the order they are specified.
     \item\verb!Nonblock assignments <=! executed in parallel.
+    \item Use \verb!logic! instead of \verb!reg/wire! (4-state type)
+    \item Use \verb!always_comb! for combinational, \verb!always_ff! for sequential logic
 \end{itemize}
 \newpage 
 \subsubsection{Case Statements}
 \begin{verbatim}
-module mux(MuxSelect, Input, Out);
-    input [4:0] Input; input [2:0] MuxSelect;
-    output Out;
-    reg Out; // declare output for always block
-    always @(*) // declare always block
-    	begin
-    	case (MuxSelect[2:0]) // start case statement
-    	3'b000: Out = Input[0]; // case 0
-    	// ...
-    	3'b100: Out = Input[4]; // case 4
-    	default: Out = 1'bx; // default case
-    	endcase end endmodule
+module mux(
+    input logic [2:0] MuxSelect,
+    input logic [4:0] Input,
+    output logic Out
+);
+    always_comb begin
+        case (MuxSelect)
+            3'b000: Out = Input[0];
+            // ...
+            3'b100: Out = Input[4];
+            default: Out = 1'bx;
+        endcase
+    end
+endmodule
 \end{verbatim}
 \subsubsection{Half Adder}
 \begin{verbatim}
-module HA(x, y, s, c);
-    input x, y; output s, c;
-    assign s = x^y;
-    assign c = x&y;
+module HA(
+    input logic x, y,
+    output logic s, c
+);
+    assign s = x ^ y;
+    assign c = x & y;
 endmodule
 \end{verbatim}
 \subsubsection{Full Adder}
 \begin{verbatim}
-module FA(a, b, c_in, s_out, c_out);
-    input a, b, c_in; output s_out, c_out;
-    wire w1, w2, w3;
+module FA(
+    input logic a, b, c_in,
+    output logic s_out, c_out
+);
+    logic w1, w2, w3;
     HA u0(.x(a), .y(b), .s(w1), .c(w2));
     HA u1(.x(c_in), .y(w1), .s(s_out), .c(w3));
-    assign c_out = w2|w3;
+    assign c_out = w2 | w3;
 endmodule
 \end{verbatim}
 \subsection{D Flip Flop}
 \begin{verbatim}
-module D-ff(D, clk, Q);
-    input D, clk;
-    output reg Q;   
-    always@(posedge clk) Q <= D; // use <= operator
+module D_ff(
+    input logic D, clk,
+    output logic Q
+);
+    always_ff @(posedge clk)
+        Q <= D;
 endmodule
 \end{verbatim}
 \subsection{T Flip Flops}
 \begin{verbatim}
-module t_ff(Clock, T, Clear_b, Q);
-    input Clock, Clear_b, T;
-    output reg Q;
-    always @(posedge Clock, negedge Clear_b)
-    begin
-            if (Clear_b == 1'b0) Q <= 0;
-            else Q <= T^Q;
+module t_ff(
+    input logic Clock, Clear_b, T,
+    output logic Q
+);
+    always_ff @(posedge Clock, negedge Clear_b) begin
+        if (Clear_b == 1'b0)
+            Q <= 1'b0;
+        else
+            Q <= T ^ Q;
     end
-endmodule 
+endmodule
 \end{verbatim}
 \subsection{Registers}
 \begin{verbatim}
-module reg8(D, clk, Q);
-    input clock;
-    input [7:0] D;
-    output reg[7:0] Q;
-    always@(posedge clock)
+module reg8(
+    input logic clk,
+    input logic [7:0] D,
+    output logic [7:0] Q
+);
+    always_ff @(posedge clk)
         Q <= D;
-    endmodule
+endmodule
 \end{verbatim}
 \subsection{ModelSim Do Files}
 \begin{verbatim}
@@ -453,274 +466,278 @@ We first write boolean algebra expressions for the outputs $Y_n=f_n(y_1,y_2,y_3,
     \item The second path goes into the function $f_nm(y_1,y_2,y_3,W)$ and \textbf{loops back} to $Y_n.$
 \end{itemize}
 The D flip flops are connected to same clock and reset signal.
-\subsection{Execution in Verilog}
+\subsection{Execution in SystemVerilog}
 \begin{verbatim}
-module FSM(input Clock, input Resetn, input w,
-           output z, output [3:0] CurState);
+module FSM(
+    input logic Clock, Resetn, w,
+    output logic z,
+    output logic [3:0] CurState
+);
 
-reg [3:0] y_Q, Y_D;
-localparam A=4'b0000, B=4'b0001, ... , G=4'b0110
+logic [3:0] y_Q, Y_D;
 
-always@(*) // State Table
-begin: state_table
-    case: (Y_Q)
-        A: begin
-                if (!w) Y_D = A; else Y_D = B;
-           end
+typedef enum logic [3:0] {
+    A = 4'b0000,
+    B = 4'b0001,
+    // ...
+    G = 4'b0110
+} state_t;
+
+always_comb begin
+    case (y_Q)
+        A: Y_D = w ? B : A;
         // ...
-        G: begin
-                if (!w) Y_D = A; else Y_D = C;
+        G: Y_D = w ? C : A;
         default: Y_D = A;
     endcase
-end 
-
-always @(posedge Clock) // State Registers
-begin: state_FFs
-    if(Resetn == 1'b0) y_Q <= A;
-    else y_Q <= Y_D;
 end
 
-// Output Logic
-assign z = ((y_Q == F) | (y_Q == G));
+always_ff @(posedge Clock) begin
+    if (!Resetn)
+        y_Q <= A;
+    else
+        y_Q <= Y_D;
+end
+
+assign z = (y_Q == F) | (y_Q == G);
 assign CurState = y_Q;
+
 endmodule
 \end{verbatim}
-\section{ARM Assembly}
+\section{RISC-V Assembly}
 \subsection{Registers}
-\begin{itemize}
-    \item R0-R3: Scratch Registers: will be overwritten by subroutines.
-    \item R4-R12: Preserved Registers: stack before using, restore before returning
-    \item R13 (SP): Stack Pointer: points to top of stack
-    \item R14 (LR): Link Register (Points to return address when BL is executed
-    \item R15 (PC): Program Counter: Holds address of next instruction to execute
-\end{itemize}
+\vspace{-2mm}
+{\footnotesize
+\begin{itemize}\setlength\itemsep{-0.5em}
+    \item x0 (zero): Hardwired zero, x1 (ra): Return address, x2 (sp): Stack pointer
+    \item x5-x7, x28-x31 (t0-t6): Temporary (caller-saved)
+    \item x8-x9, x18-x27 (s0-s11): Saved (callee-saved)
+    \item x10-x17 (a0-a7): Function args/return values
+    \item x3 (gp): Global pointer, x4 (tp): Thread pointer
+\end{itemize}}
 \subsection{Instructions}
-Let \verb!r0=1!, \verb!r1=2!, \verb!r2=#0b1010!.
-\vspace{-0mm}
+Let \verb!a0=1!, \verb!a1=2!, \verb!a2=0b1010!.
 \begin{center}
     \begin{tabular}{c|c|c}
     Instruction & Example & Result \\ 
-    \verb!MOV! & \verb!mov r3, #3    ! & \verb!r3 = 3     !\\ 
-    \verb!ADD! & \verb!add r3, r0, r0! & \verb!r3 = 1 + 1 !\\
-    \verb!SUB! & \verb!sub r3, r0, r0! & \verb!r3 = 1 - 1 !\\
-    \verb!MUL! & \verb!mul r3, r0, r0! & \verb!r3 = 1 * 1 !\\
-    \verb!LSL! & \verb!lsl r3, r2, #1! & \verb!r3 = #0b0100! \\ 
-    \verb!LSR! & \verb!lsr r3, r2, #1! & \verb!r3 = #0b0101! \\
-    \verb!ASR! & \verb!asr r3, r2, #1! & \verb!r3 = #0b1101! \\
-    \verb!AND! & \verb!and r3, r1, r0! & \verb!r3 = (1 and 2) = 0! \\
+    \verb!ADDI! & \verb!addi a3, zero, 3! & \verb!a3 = 3     !\\ 
+    \verb!ADD! & \verb!add a3, a0, a0! & \verb!a3 = 1 + 1 !\\
+    \verb!SUB! & \verb!sub a3, a0, a0! & \verb!a3 = 1 - 1 !\\
+    \verb!MUL! & \verb!mul a3, a0, a0! & \verb!a3 = 1 * 1 !\\
+    \verb!SLLI! & \verb!slli a3, a2, 1! & \verb!a3 = 0b10100! \\ 
+    \verb!SRLI! & \verb!srli a3, a2, 1! & \verb!a3 = 0b0101! \\
+    \verb!SRAI! & \verb!srai a3, a2, 1! & \verb!a3 = 0b1101! \\
+    \verb!AND! & \verb!and a3, a1, a0! & \verb!a3 = (1 and 2) = 0! \\
     \end{tabular}
 \end{center}
 \subsection{Memory Stuff}
-\begin{itemize}
-    \item \verb!BL:Branch Link!: Goes to a branch but updates \verb!LR!
-    \item Stacks: \verb!PUSH {R0, R1}! pushes \verb!R0,R1! to a stack where \verb!R0! is at the top. Last in First Out.
-    \item Each instruction is a place in memory, with addresses going up by 4 bytes.
-    \item Addresses of inputs are stored in the memory immediately after the instructions.
-\end{itemize}
+\vspace{-2mm}
+{\footnotesize
+\begin{itemize}\setlength\itemsep{-0.5em}
+    \item \verb!JAL!: Jump and Link - stores return address in \verb!ra! (x1)
+    \item \verb!JALR!: Jump and Link Register - indirect jump
+    \item Stacks: Manual push/pop: \verb!addi sp, sp, -8! then \verb!sw a0, 0(sp)!
+    \item Each instruction is 4 bytes (32-bit) in RV32.
+\end{itemize}}
 \subsection{Load and Store}
-\begin{itemize}
-    \item \verb!LDR Ra, [Rb], #offset!: value at [address] found in \verb!Rb! is loaded into register \verb!Ra!. Then the [address] is incremented by \verb!offset!.
-    \item \verb!STR Ra, [Rb], #offset!: value found in register \verb!Ra! is stored to [address] found in \verb!Rb!. Then the [address] is incremented by \verb!offset!.
-    \item \verb!LDR Ra, =LIST! Makes \verb!Ra! contain the address to the first element of the input variable.
-\end{itemize}
-\textbf{Fancy Stuff:}
-\begin{itemize}
-    \item \verb!LDR Ra, [Rb, #offset]! is pre-indexed (doesn't change Rb)
-    \item \verb!LDRB! - load byte (8 bits, which is 2 hex letters)
-    \item \verb!LDRSB! - signed load byte (LDRB but gives sign extension to result to make it 4 bytes while retaining the sign)  
-    \item \verb!LDRH! - load halfword (for \verb![R3, #n]!, n must be even)
-    \item \verb!LDRSH! - signed load halfword    
-\end{itemize}
-The same applies for STR, but no signed versions.
-\subsection{Flags}
-\begin{center}
-    \begin{tabular}{c|c|c|c}
-        N & C & V & Z \\ 
-        negative & carry & overflow & zero
-    \end{tabular}
-\end{center}
+\vspace{-2mm}
+{\footnotesize
+\begin{itemize}\setlength\itemsep{-0.5em}
+    \item \verb!lw a0, offset(a1)!: Load word; \verb!sw a0, offset(a1)!: Store word
+    \item \verb!la a0, label!: Load address (pseudo-instruction)
+    \item \verb!lb/lbu! - load byte (signed/unsigned), \verb!lh/lhu! - load halfword
+    \item \verb!sb! - store byte, \verb!sh! - store halfword
+\end{itemize}}
 \subsection{Conditionals}
-\verb!CMP R0, R1! computes \verb!R0-R1! and updates flag. We can append conditionals after instructions to act as if-then statements:
-\begin{center}
-    \begin{tabular}{c|c||c|c||c|c}
-        EQ & $==$ & NE $\neq$ & GT & > \\ 
-        GE & $\ge$ & LE & $\le$ &  &
-    \end{tabular}
-\end{center}
+\vspace{-2mm}
+{\scriptsize
+RISC-V has no flags. Branch instructions: \verb!beq! (equal), \verb!bne! (not equal), \verb!blt/bge! (less/greater signed), \verb!bltu/bgeu! (unsigned). Set: \verb!slt!, \verb!slti!, \verb!sltu!, \verb!sltiu!.
+}
 \subsection{Interrupts}
-\begin{enumerate}
-    \item Provide Exception Vector Table (\small{When an exception occurs, the processor must execute handler code that corresponds to the exception. The location in memory where the handler is stored is called the exception vector.})
-    \item Initialize SP for IRQ mode, then initialize SP for SVC mode.
-    \item Configure GIC to enable interrupts (code given)
-    \item Enable interrupt generation in I/O device.
-    \item Set I=0 in CPSR.
-    \item Provide IRQ Handler code which queries GIC to determine source of interrupt.
-    \item Provide interrupt service routines (ISRs), i.e. \verb!KEY_ISR!
-    \item The interrupt handler must clear interrupt from GIC.
-\end{enumerate}
-\newpage
-\section{ARM Assembly Example Code}
+\vspace{-2mm}
+{\footnotesize
+\begin{enumerate}\setlength\itemsep{-0.5em}
+    \item Set \verb!mtvec! CSR (trap vector)
+    \item Enable interrupts in \verb!mstatus! (MIE bit)
+    \item Enable sources in \verb!mie! CSR
+    \item Configure PLIC/CLIC
+    \item Save context on trap entry
+    \item Read \verb!mcause! CSR for cause
+    \item Handle in ISR, clear PLIC pending bit
+    \item Restore context, return with \verb!mret!
+\end{enumerate}}
+\section{RISC-V Assembly Example Code}
 \subsection{Enabling Interrupts}
+\vspace{-2mm}
+{\scriptsize
 \begin{verbatim}
-// SP for IRQ
-MOV R0, #0b11010010
-MSR CPSR, R0 // Now in IRQ mode
-LDR SP, =0x20000 // IRQ SP
-
-// SP for SCV
-MOV R0, #0b11010011
-MSR CPSR, R0 // Now in SVC mode
-LDR SP, =0x3FFFFFFC
-
-// Skey enable
-LDR R1, =0xFF20058 // mask keys
-MOV R2, #0b1001 // enable for key3, key0
-STR R2, [R1] // store to enable interrupts
-
-// Enable Interrupts
-MOV R1, #0b01010011 // enable in SVC mode
-MSR CPSR, R1
-\end{verbatim}
+li sp, 0x10000        # Initialize stack
+la t0, trap_handler
+csrw mtvec, t0        # Set trap vector
+li t0, 0x8
+csrs mstatus, t0      # Enable interrupts (MIE)
+li t0, 0x800
+csrs mie, t0          # Enable external int (MEIE)
+li t0, 0xFF20058
+li t1, 0b1001
+sw t1, 0(t0)          # Enable key3, key0
+\end{verbatim}}
 \subsection{Check Cause of Interrupt}
+\vspace{-2mm}
+{\scriptsize
 \begin{verbatim}
-SERVICE_IQR:
-	PUSH {R0-R5, LR}
-	LDR R4, =MPCORE_GIC CPUIF
-	LDR R5, [R4, #ICCIAR] // makes R5 interrupt ID
-	
-	CMP R5, #73 // check if key has ID 73
-	BNE ERROR
-	BL KEY_ISR // must be a key IRQ, BL to subroutine
-	B EXIT_IRQ // exit after handling IRQ
-	
-ERROR:
-	B ERROR // unknown IRQ
-	
-EXIT_IRQ:
-	STR R5, [R4, #ICCEOIR]
-	POP {R0-R5, LR}
-	SUBS PC, LR, #4
-\end{verbatim}
-\subsection{Subroutine to Deal with Interrupts}
+trap_handler:
+    addi sp, sp, -32
+    sw t0, 0(sp); sw t1, 4(sp); sw a0, 8(sp)
+    sw a1, 12(sp); sw ra, 16(sp)
+    csrr t0, mcause       # Read cause
+    li t1, 0x8000000B
+    bne t0, t1, error_trap
+    jal ra, key_isr
+    j exit_trap
+error_trap:
+    j error_trap
+exit_trap:
+    lw t0, 0(sp); lw t1, 4(sp); lw a0, 8(sp)
+    lw a1, 12(sp); lw ra, 16(sp)
+    addi sp, sp, 32
+    mret
+\end{verbatim}}
+\subsection{ISR Subroutine}
+\vspace{-2mm}
+{\scriptsize
 \begin{verbatim}
-KEY_ISR:
-	PUSH {R1-R5}
-	LDR R5, =CURR_VALUE // address of curr_value
-	LDR R4, [R5] // current value to R4
-	LDR R2, =0xFC20005C // edge capture address
-	LDR R3, [R2] // edge capture value
-	CMP R3, #0b1000 // check if key 3
-	BNE KEY0 // if not key3, must be key0
-	CMP R4, #0 // check if curr_value 0
-	BEQ ENDISR // branch if 0
-	SUB R4, R4, #1 // decrease value
-	STR R4, [R5] // store
-	B ENDISR
-	
-KEY0:
-	// code for key 0
-
-ENDISR:
-	POP {R1-R5}
-	MOV PC, LR
-\end{verbatim}
+key_isr:
+    addi sp, sp, -20
+    sw t2, 0(sp); sw t3, 4(sp)
+    sw t4, 8(sp); sw t5, 12(sp)
+    la t5, CURR_VALUE
+    lw t4, 0(t5)
+    li t2, 0xFC20005C
+    lw t3, 0(t2)
+    li t0, 0b1000
+    bne t3, t0, key0
+    beq t4, zero, endisr
+    addi t4, t4, -1
+    sw t4, 0(t5)
+    j endisr
+key0:
+    # code for key 0
+endisr:
+    lw t2, 0(sp); lw t3, 4(sp)
+    lw t4, 8(sp); lw t5, 12(sp)
+    addi sp, sp, 20
+    ret
+\end{verbatim}}
 \subsection{Polled IO with Timer}
+\vspace{-2mm}
+{\scriptsize
 \begin{verbatim}
 .text
-.global_start
-
+.globl _start
 _start:
-LDR R0,=0xFFFEC600 //load base address of timer
-LDR R1,=200000000 //200 million -> starting time
-STR R1,[R0] //load time into base address of timer
-MOV R1,#0b111 
-STR R1,[R0,#8] //A=E=1
-MOV R4,#0 //seconds
-MOV R5,#0 //minutes
-MOV R6,#0 //hours
-
-POLL:
-
-LDR R1,[R0,#12] // Load F bit. It's offset
-                   from base address by #12
-CMP R1,#0
-BEQ POLL //If the F bit is 0, then continue polling.
-STR R1,[R0,#12] // Plug 1->F bit to reset F bit.
-                   R0 has base address
-ADD R4,R4,#1 //Increment seconds
-CMP R4,#60 //Have we hit 60s?
-BNE POLL //If we haven't continue polling.
-MOV R4,#0 //If we have hit 60, move 0 into seconds
-ADD R5,R5,#1 //And then increment minutes 
-CMP R5,#60 //Then we check if minutes have hit 60
-BNE POLL //If they haven't, continue polling
-MOV R5,#0 //If they have, set the minutes to 0
-ADD R6,R6,#1 //And then increment hours
-CMP R6,#24 //Then we check if the hours have hit 24
-BNE POLL //If they haven't, continue polling
-MOV R6,#0 //If they have, set the hours to 0
-B POLL //Continue polling
-\end{verbatim}
+    li a0, 0xFFFEC600
+    li a1, 200000000
+    sw a1, 0(a0)
+    li a1, 0b111
+    sw a1, 8(a0)
+    li s0, 0; li s1, 0; li s2, 0  # sec,min,hr
+poll:
+    lw a1, 12(a0)
+    beq a1, zero, poll
+    sw a1, 12(a0)
+    addi s0, s0, 1
+    li t0, 60
+    bne s0, t0, poll
+    li s0, 0
+    addi s1, s1, 1
+    bne s1, t0, poll
+    li s1, 0
+    addi s2, s2, 1
+    li t0, 24
+    bne s2, t0, poll
+    li s2, 0
+    j poll
+\end{verbatim}}
 \subsection{Exception Vector Table}
+\vspace{-2mm}
+{\scriptsize
 \begin{verbatim}
-0x0 Reset exception (branch to _start)
-0x18 B to IRQ_HANDLER
-\end{verbatim}
+.align 2
+trap_vector:
+    j trap_handler  # Direct: all to one handler
+# Vectored: mtvec.MODE=1, base + 4*cause
+# 0x00:Exception 0x04:Supervisor SW int
+# 0x0C:Machine SW int 0x14:Supervisor timer
+\end{verbatim}}
 \subsection{Find Sum with Recursion}
+\vspace{-2mm}
 \begin{multicols}{2}
-    \begin{verbatim}
-.global _start
+{\scriptsize
+\begin{verbatim}
+.globl _start
 _start:
-    LDR SP, =0x20000
-    LDR R4, =N
-    LDR R0, [R4]
-    MOV R1, #0
-    BL FINDSUM
-    ADD R1, R1, R0
-END: B END
-FINDSUM:
-    PUSH {R0, LR}
-    CMP R0, #2
-    BLT RETURN
-    SUB R0, R0, #1
-    BL FINDSUM
-    ADD R1, R1, R0
-RETURN:
-    POP {R0, PC}
+    li sp, 0x20000
+    la s0, N
+    lw a0, 0(s0)
+    li a1, 0
+    jal ra, findsum
+    add a1, a1, a0
+end: j end
+findsum:
+    addi sp, sp, -8
+    sw a0, 0(sp); sw ra, 4(sp)
+    li t0, 2
+    blt a0, t0, return
+    addi a0, a0, -1
+    jal ra, findsum
+    add a1, a1, a0
+return:
+    lw a0, 0(sp); lw ra, 4(sp)
+    addi sp, sp, 8
+    ret
 .data
 N: .word 5
-        \end{verbatim}
+\end{verbatim}}
 \end{multicols}
 \subsection{Fibonacci with Recursion}
+\vspace{-2mm}
 \begin{multicols}{2}
+{\scriptsize
 \begin{verbatim}
 .data
-    N: .word 10
+N: .word 10
 .text
-.global _start
+.globl _start
 _start:
-    LDR SP, =0x20000
-    LDR R4, =N
-    LDR R0, [R4]
-    MOV R1, #0
-    MOV R2, #0
-    BL FIB
-END: B END
-FIB:
-    PUSH {R0, R2, LR}
-    CMP R0, #2
-    BGE RECUR
-    MOV R1, R0
-    POP {R0, R2, PC}
-RECUR:
-    SUB R0, #1
-    BL FIB
-    MOV R2, R1
-    SUB R0, #1
-    BL FIB
-    ADD R1, R2
-    POP {R0, R2, PC}
-\end{verbatim}
+    li sp, 0x20000
+    la s0, N; lw a0, 0(s0)
+    li a1, 0; li a2, 0
+    jal ra, fib
+end: j end
+fib:
+    addi sp, sp, -12
+    sw a0, 0(sp); sw a2, 4(sp)
+    sw ra, 8(sp)
+    li t0, 2
+    bge a0, t0, recur
+    mv a1, a0
+    lw a0, 0(sp); lw a2, 4(sp)
+    lw ra, 8(sp)
+    addi sp, sp, 12
+    ret
+recur:
+    addi a0, a0, -1
+    jal ra, fib
+    mv a2, a1
+    addi a0, a0, -1
+    jal ra, fib
+    add a1, a1, a2
+    lw a0, 0(sp); lw a2, 4(sp)
+    lw ra, 8(sp)
+    addi sp, sp, 12
+    ret
+\end{verbatim}}
 \end{multicols}
 \end{multicols*}
 \end{document}
