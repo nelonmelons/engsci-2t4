@@ -71,22 +71,6 @@
 
 
 
-\section{Boolean Algebra}
-\textbf{De Morgan's Theorem} tells us
-\begin{equation}
-    \overline{x\cdot y}=\overline{x}+\overline{y}, \quad\quad\quad \overline{x+y}=\overline{x}\cdot\overline{y}
-\end{equation}
-Inverting the inputs to an \verb!or! gate is the same as inverting the outputs to an \verb!and! gate, and the other way around. We also have: 
-\begin{itemize}
-    \item $(x+y)(y+z)(\overline{x}+z)=(x+y)(\overline{x}+z)$
-    \item $x+yz=(x+y)(x+z)$
-    \item $x+xy=x$ (Absorption)
-    \item $xy+x\overline{y}=x$ (Combining)
-    \item $(x+y)(x+\overline{y})=x$
-    \item $ x+\overline{x}y=x+y$
-    \item $x(\overline{x}+y)=xy$
-    \item $xy+yz+z\overline{x}=xy+z\overline{x}$ (Consensus)
-\end{itemize}
 
 \subsection{Gates}
 \begin{center}
