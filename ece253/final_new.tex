@@ -65,80 +65,6 @@
      \Large{\textbf{ECE253 Final Cheatsheet}}\\
      \small{\textit{Author: your mother}} \\
 \end{center}
-
-\subsection{Gates}
-\begin{center}
-    \begin{tabular}{c|c||c|c||c|c}
-        \verb!AND! & \begin{circuitikz}[scale=0.5, transform shape] 
-            \draw(0,0) node[and port] {};
-        \end{circuitikz} &
-        \verb!OR! & \begin{circuitikz}[scale=0.5, transform shape] 
-            \draw(0,0) node[or port] {};
-        \end{circuitikz} &
-        \verb!NOT! & \begin{circuitikz}[scale=0.5, transform shape] 
-            \draw(0,0) node[not port] {};
-        \end{circuitikz} \\ \hline
-        \verb!NOR! & \begin{circuitikz}[scale=0.5, transform shape] 
-            \draw(0,0) node[nor port] {};
-        \end{circuitikz} &
-        \verb!NAND! & \begin{circuitikz}[scale=0.5, transform shape] 
-            \draw(0,0) node[nand port] {};
-        \end{circuitikz} &
-        \verb!XOR! & \begin{circuitikz}[scale=0.5, transform shape] 
-            \draw(0,0) node[xor port] {};
-        \end{circuitikz}
-    \end{tabular}
-\end{center}
-\subsection{SOPs and POSs}
-We can create boolean algebra expressions for truth tables.
-
-\textbf{Minterm:} Corresponds to each row of truth table, i.e. $m_3=\overline{x_2}x_1x_0$ such that when $3=0b011$ is substituted in, $m_3=1$ and $m_3=0$ otherwise.
-
-\textbf{Maxterm:} They give $M_i=0$ if and only if the input is $i$. For example, $M_3=x_2+\overline{x_1}+\overline{x_0}.$
-
-\textbf{SOP and POS:} Truth tables can be represented as a sum of minterms, or product of maxterms.
-\begin{itemize}
-    \item Use minterms when you have to use \verb!NAND! gates and maxterms when you have to use \verb!NOR! gates.
-    \item When converting expressions to its dual, it's often helpful to negate expressions twice, or draw out the logic circuit.
-\end{itemize}
-\subsection{Cost}
-The cost of a logic circuit is given by
-\begin{equation}
-    \text{cost} = \text{gates} + \text{inputs}
-\end{equation}
-If an inversion (\verb!NOT!) is performed on the primary inputs, then it is not included. If it is needed inside the circuit, then the \verb!NOT! gate is included in the cost.
-\subsection{Karnaugh Map}
-Method of finding a minimum cost expression: We can map out truth table on a grid for easier pattern recognition. Example of a four variable map is shown below:
-\begin{center}
-    \begin{karnaugh-map}[4][4][1][$x_2x_1$][$x_4x_3$]
-        \minterms{0,1,3,4,5,7,11,14,15,10}
-        \maxterms{2,6,8,9,10,12,13}
-        % \indeterminants{2,5}
-        \implicant{0}{5}
-        \implicant{3}{11}
-        \implicant{15}{10}
-        % \implicant{4}{5}
-    \end{karnaugh-map}
-\end{center}
-\vspace{-8mm}
-and the representation is $\overline{x_2}\cdot\overline{x_4}+x_2 \cdot x_1+\overline{x_4} \cdot x_2$ when using \textit{minterms}. To use \textit{maxterms}, we take the intersection of sets that don't include blocks of $0$s. For example, $(\overline{x_2}\cdot \overline{x_1})(\overline{x_2}+x_1+x_4).$ Some \textit{rules}:
-\begin{itemize}
-    \item Side lengths should be powers of $2$ and be as large as possible.
-    \item Use \textbf{graycoding}: adjacent rows/columns should share one bit.
-\end{itemize}
-\subsubsection{Minimization Procedure}
-\begin{enumerate}
-    \item Generate all prime implicants for given function $f$
-    \item Find the set of essential prime implicants
-    \item Determine the nonessential prime implicants that should be added.
-\end{enumerate}
-\subsection{Common Logic Gates}
-\begin{itemize}
-    \item \textbf{Mux 2$\rightarrow$1:} $\verb#mux2to1#(s,x_0,x_1) = \overline{s}x_0+sx_1$
-    \item \textbf{Not:} \verb#not(x)=nand(x,x)=nor(x,x)#
-    \item \verb!XOR! acts as modular arithmetic.
-    \item Multiplexers are functionally complete. $\verb!AND!=mux(x,y,1)$, $\verb!OR!=mux(x,0,y).$
-\end{itemize}
 \subsection{RS Latch}
 Sequential circuits depend on sequence of inputs. A \textbf{SR Latch} are cross-coupled \verb!NOR! gates.
 % \begin{center}
@@ -377,141 +303,39 @@ force {MuxSelect[2]} 0 0ns, 1 {4ns} -r 8ns
     \item Synchronous High/Low: Resets during positive/negative edge
 \end{itemize}
 \section{Finite State Machines}
-\subsection{Steps}
-\begin{multicols}{2}
-    \begin{enumerate}
-        \item State Diagram
-        \item State Table
-        \item State Assignment
-        \item State-Assigned Table
-        \item Synthesize Circuit
-        \item Celebrate!
-    \end{enumerate}
-\end{multicols}
-\subsection{Step 1: State Diagram Example}
-\begin{center}
-    \includegraphics[width=0.6\linewidth]{figures/fsm.png}
-\end{center}
-\subsection{Step 2: State Table Example}
-\begin{center}
-    \begin{tabular}{c|cc|c}
-        Present State & \multicolumn{2}{c|}{Next State} & Output ($z$) \\
-        A & A & B & 0 \\ 
-        B & A & C & 0 \\ 
-        $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ \\
-        G & A & C & 1
-    \end{tabular}
-\end{center}
-\subsection{Step 3: State Assignment Example}
-\begin{itemize}
-    \item Using \textbf{one-hot encoding:} Choose number of flip flops: $7$ (since 7 states)
-    \item Choose state codes:
-    \begin{itemize}
-        \item A = 0000001, B=0000010, $\dots$, G=1000000
-    \end{itemize}
-\end{itemize}
-Alternatively use 3 flip flops to represent state codes as 000, 001, 010, etc.
+{\scriptsize
+\textbf{Steps:} (1) State Diagram (2) State Table (3) State Assignment (4) State-Assigned Table (5) Synthesize Circuit
 
-\newpage
+\textbf{State Encoding:} \textit{One-hot:} $n$ states = $n$ flip flops (A=0000001, B=0000010, ...). \textit{Binary:} $n$ states = $\lceil\log_2 n\rceil$ flip flops (000, 001, 010, ...).
 
-\subsection{Step 4: State-Assigned Table Example}
-By convention, use $y$ for input and $Y$ for output.
-\begin{tabular}{c|cc|c}
-    $y_3y_2y_1$ & $Y_3Y_2Y_1$ $(W=0)$ & $Y_3Y_2Y_1$ $(W=1)$ & z \\
-    000 & 000 & 001 & 0 \\
-    001 & 000 & 010 & 0 \\
-    $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ \\
-    110 & 000 & 010 & 1
-\end{tabular}
-\subsection{Step 5: Synthesize Example}
-We first write boolean algebra expressions for the outputs $Y_n=f_n(y_1,y_2,y_3,W$) and $z=g(y_1,y_2,y_3)$. For each flip flop $i$, the input is $Y_i$ and the output is $y_i$. The output then branches off into two paths:
-\begin{itemize}
-    \item The first path goes into the function $g(y_1,y_2,y_3)$ and leads to output $z$
-    \item The second path goes into the function $f_nm(y_1,y_2,y_3,W)$ and \textbf{loops back} to $Y_n.$
-\end{itemize}
-The D flip flops are connected to same clock and reset signal.
-\subsection{Execution in SystemVerilog}
+\textbf{Synthesis:} Write $Y_n=f_n(y_1,\ldots,W)$, $z=g(y_1,\ldots)$. For each FF $i$: input=$Y_i$, output=$y_i$. Output branches to (1) $g$ for output $z$, (2) $f_n$ loops back to $Y_n$. FFs share clock/reset.
+}
+\subsection{FSM in SystemVerilog}
+{\scriptsize
 \begin{verbatim}
-module FSM(
-    input logic Clock, Resetn, w,
-    output logic z,
-    output logic [3:0] CurState
-);
-
+module FSM(input logic Clock, Resetn, w,
+    output logic z, output logic [3:0] CurState);
 logic [3:0] y_Q, Y_D;
-
-typedef enum logic [3:0] {
-    A = 4'b0000,
-    B = 4'b0001,
-    // ...
-    G = 4'b0110
-} state_t;
-
+typedef enum logic [3:0] {A=4'b0000, B=4'b0001,
+    /*...*/ G=4'b0110} state_t;
 always_comb begin
     case (y_Q)
         A: Y_D = w ? B : A;
-        // ...
+        /*...*/
         G: Y_D = w ? C : A;
         default: Y_D = A;
     endcase
 end
-
 always_ff @(posedge Clock) begin
-    if (!Resetn)
-        y_Q <= A;
-    else
-        y_Q <= Y_D;
+    if (!Resetn) y_Q <= A;
+    else y_Q <= Y_D;
 end
-
 assign z = (y_Q == F) | (y_Q == G);
 assign CurState = y_Q;
-
 endmodule
 \end{verbatim}
+}
 \section{RISC-V Assembly}
-\subsection{Registers}
-\vspace{-2mm}
-{\footnotesize
-\begin{itemize}\setlength\itemsep{-0.5em}
-    \item x0 (zero): Hardwired zero, x1 (ra): Return address, x2 (sp): Stack pointer
-    \item x5-x7, x28-x31 (t0-t6): Temporary (caller-saved)
-    \item x8-x9, x18-x27 (s0-s11): Saved (callee-saved)
-    \item x10-x17 (a0-a7): Function args/return values
-    \item x3 (gp): Global pointer, x4 (tp): Thread pointer
-\end{itemize}}
-\subsection{Instructions}
-Let \verb!a0=1!, \verb!a1=2!, \verb!a2=0b1010!.
-\begin{center}
-    \begin{tabular}{c|c|c}
-    Instruction & Example & Result \\
-    \verb!ADDI! & \verb!addi a3, zero, 3! & \verb!a3 = 3!\\
-    \verb!ADD! & \verb!add a3, a0, a0! & \verb!a3 = 1 + 1!\\
-    \verb!SUB! & \verb!sub a3, a0, a0! & \verb!a3 = 1 - 1 !\\
-    \verb!MUL! & \verb!mul a3, a0, a0! & \verb!a3 = 1 * 1 !\\
-    \verb!SLLI! & \verb!slli a3, a2, 1! & \verb!a3 = 0b10100!\\
-    \verb!SRLI! & \verb!srli a3, a2, 1! & \verb!a3 = 0b0101!\\
-    \verb!SRAI! & \verb!srai a3, a2, 1! & \verb!a3 = 0b1101!\\
-    \verb!AND! & \verb!and a3, a1, a0! & \verb!a3 = (1 and 2) = 0!\\
-    \end{tabular}
-\end{center}
-\subsection{Memory Stuff}
-\vspace{-2mm}
-{\footnotesize
-\begin{itemize}\setlength\itemsep{-0.5em}
-    \item \verb!JAL!: Jump and Link - stores return address in \verb!ra! (x1)
-    \item \verb!JALR!: Jump and Link Register - indirect jump
-    \item Stacks: Manual push/pop: \verb!addi sp, sp, -8! then \verb!sw a0, 0(sp)!
-    \item Each instruction is 4 bytes (32-bit) in RV32.
-\end{itemize}}
-\subsection{Load and Store}
-\vspace{-2mm}
-{\footnotesize
-\begin{itemize}\setlength\itemsep{-0.5em}
-    \item \verb!lw a0, offset(a1)!: Load word; \verb!sw a0, offset(a1)!: Store word
-    \item \verb!la a0, label!: Load address (pseudo-instruction)
-    \item \verb!lb/lbu! - load byte (signed/unsigned), \verb!lh/lhu! - load halfword
-    \item \verb!sb! - store byte, \verb!sh! - store halfword
-\end{itemize}}
 \subsection{Conditionals}
 \vspace{-2mm}
 {\scriptsize
@@ -703,5 +527,15 @@ recur:
     ret
 \end{verbatim}}
 \end{multicols}
+\section{Timing Analysis}
+\subsection{Minimum Clock Period}
+\vspace{-2mm}
+$$T_{\min} = T_{su} + T_{CQ} + T_{logic}$$
+$$F_{\max} = \frac{1}{T_{\min}}$$
+\subsection{Hold Time Violation}
+\vspace{-2mm}
+For no hold time violation:
+$$t_{hold} + t_{skew} \leq t_{CQ} + t_{logic}$$
+where $t_{skew}$ is the minimum clock skew.
 \end{multicols*}
 \end{document}
