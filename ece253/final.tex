@@ -1,17 +1,18 @@
-\documentclass[11pt,landscape]{article}
+\documentclass[4pt]{article}
 \usepackage{multicol}
 \usepackage{calc}
 \usepackage{ifthen}
-\usepackage[landscape]{geometry}
+\usepackage[portrait]{geometry}
 \usepackage{hyperref}
 \usepackage{lipsum}  
+\usepackage{graphicx}
 
 \ifthenelse{\lengthtest { \paperwidth = 11in}}
-	{ \geometry{top=.5in,left=.5in,right=.5in,bottom=.5in} }
-	{\ifthenelse{ \lengthtest{ \paperwidth = 297mm}}
-		{\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm} }
-		{\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm} }
-	}
+    { \geometry{top=.25in,left=.25in,right=.25in,bottom=.25in} }
+    {\ifthenelse{ \lengthtest{ \paperwidth = 297mm}}
+        {\geometry{top=0.5cm,left=0.5cm,right=0.5cm,bottom=0.5cm} }
+        {\geometry{top=0.5cm,left=0.5cm,right=0.5cm,bottom=0.5cm} }
+    }
 
 % Turn off header and footer
 \pagestyle{empty}
@@ -64,41 +65,32 @@
 \setlength{\multicolsep}{1pt}
 \setlength{\columnsep}{2pt}
 
-\begin{center}
-     \Large{\textbf{ECE253 Final Cheatsheet}}\\
-     \small{\textit{Author: your mother}} \\
-\end{center}
-
-
-
-
 \subsection{Gates}
 \begin{center}
     \begin{tabular}{c|c||c|c||c|c}
-        \verb!AND! & \begin{circuitikz}[scale=0.7, transform shape] 
+        \verb!AND! & \begin{circuitikz}[scale=0.5, transform shape] 
             \draw(0,0) node[and port] {};
         \end{circuitikz} & 
 
-        \verb!OR! & \begin{circuitikz}[scale=0.7, transform shape] 
+        \verb!OR! & \begin{circuitikz}[scale=0.5, transform shape] 
             \draw(0,0) node[or port] {};
         \end{circuitikz} &
-        \verb!NOT! & \begin{circuitikz}[scale=0.7, transform shape] 
+        \verb!NOT! & \begin{circuitikz}[scale=0.5, transform shape] 
             \draw(0,0) node[not port] {};
         \end{circuitikz} \\ \hline
-        \verb!NOR! & \begin{circuitikz}[scale=0.7, transform shape] 
+        \verb!NOR! & \begin{circuitikz}[scale=0.5, transform shape] 
             \draw(0,0) node[nor port] {};
         \end{circuitikz} &
-        \verb!NAND! & \begin{circuitikz}[scale=0.7, transform shape] 
+        \verb!NAND! & \begin{circuitikz}[scale=0.5, transform shape] 
             \draw(0,0) node[nand port] {};
         \end{circuitikz} &
-        \verb!XOR! & \begin{circuitikz}[scale=0.7, transform shape] 
+        \verb!XOR! & \begin{circuitikz}[scale=0.5, transform shape] 
             \draw(0,0) node[xor port] {};
         \end{circuitikz}
     \end{tabular}
 \end{center}
 \subsection{SOPs and POSs}
 We can create boolean algebra expressions for truth tables.
-\vspace{2mm}
 
 \textbf{Minterm:} Corresponds to each row of truth table, i.e. $m_3=\overline{x_2}x_1x_0$ such that when $3=0b011$ is substituted in, $m_3=1$ and $m_3=0$ otherwise.  
 
@@ -117,8 +109,9 @@ The cost of a logic circuit is given by
 If an inversion (\verb!NOT!) is performed on the primary inputs, then it is not included. If it is needed inside the circuit, then the \verb!NOT! gate is included in the cost.
 \subsection{Karnaugh Map}
 Method of finding a minimum cost expression: We can map out truth table on a grid for easier pattern recognition. Example of a four variable map is shown below:
+\vspace{-5mm}
 \begin{center}
-    \begin{karnaugh-map}[4][4][1][$x_2x_1$][$x_4x_3$]
+\scalebox{0.75}{\begin{karnaugh-map}[4][4][1][$x_2x_1$][$x_4x_3$]
         \minterms{0,1,3,4,5,7,11,14,15,10}
         \maxterms{2,6,8,9,10,12,13}
         % \indeterminants{2,5}
@@ -126,7 +119,7 @@ Method of finding a minimum cost expression: We can map out truth table on a gri
         \implicant{3}{11}
         \implicant{15}{10}
         % \implicant{4}{5}
-    \end{karnaugh-map}
+    \end{karnaugh-map}}
 \end{center}
 \vspace{-8mm}
 and the representation is $\overline{x_2}\cdot\overline{x_4}+x_2 \cdot x_1+\overline{x_4} \cdot x_2$ when using \textit{minterms}. To use \textit{maxterms}, we take the intersection of sets that don't include blocks of $0$s. For example, $(\overline{x_2}\cdot \overline{x_1})(\overline{x_2}+x_1+x_4).$ Some \textit{rules}: 
@@ -147,7 +140,7 @@ and the representation is $\overline{x_2}\cdot\overline{x_4}+x_2 \cdot x_1+\over
     \item \verb!XOR! acts as modular arithmetic.
     \item Multiplexers are functionally complete. $\verb!AND!=mux(x,y,1)$, $\verb!OR!=mux(x,0,y).$
 \end{itemize}
-\subsection{RS Latch}
+\subsection{RS Latch + Gated D Latch}
 Sequential circuits depend on sequence of inputs. A \textbf{SR Latch} are cross-coupled \verb!NOR! gates.
 \vspace{2mm}
 % \begin{center}
@@ -167,22 +160,6 @@ Sequential circuits depend on sequence of inputs. A \textbf{SR Latch} are cross-
         \end{center}
 
 
-        \begin{center}
-            \begin{tabular}{c|c|c|c}
-                S & R & Q & $\overline{Q}$ \\ \hline
-                0 & 0 & 0/1 & 1/0 \\
-                0 & 1 & 0 & 1 \\ 
-                1 & 0 & 1 & 0 \\ 
-                1 & 1 & 0 & 0
-           \end{tabular}
-        \end{center}
-        \vspace{-2mm}
-        \scriptsize When $S=R=0$, it stores the last $Q$ value. In practice, we should not have $S=R=1$.
-    \end{multicols}
-}
-\subsection{Gated D Latch and Clock Signal}
-{
-    \begin{multicols}{2}
         \begin{center}
             \begin{tikzpicture}[scale=0.5, transform shape]
  
@@ -228,16 +205,8 @@ Sequential circuits depend on sequence of inputs. A \textbf{SR Latch} are cross-
                  
                 \end{tikzpicture}
         \end{center}
-
-
-        \begin{center}
-            \begin{tabular}{c|c}
-                Clk & $Q(t+1)$ \\ \hline
-                0 & Q(t) \\
-                1 & D
-           \end{tabular}
-        \end{center}
-        \vspace{-3mm}
+        
+        \scriptsize When $S=R=0$, stores the last $Q$ value.
     \end{multicols}
 }
 
@@ -257,6 +226,7 @@ Consists of two gated D latches, connected in series and both connected to the s
 \subsection{SystemVerilog}
 \subsubsection{Logic Operators}
 \begin{center}
+    {\scriptsize
     \begin{tabular}{c|c||c|c}
         \verb!bitwise AND! & \verb!&! &
         \verb!bitwise OR! & \verb!|! \\ \hline
@@ -269,16 +239,15 @@ Consists of two gated D latches, connected in series and both connected to the s
         \verb!concatenation! & \verb!{}! &
         \verb!replication! & \verb!{{}}! 
     \end{tabular}
+    }
 \end{center}
 \begin{itemize}
-    \item \verb!reduction! operators are put at the start and output a scalar.
-    \item \verb!bitwise! operators 
     \item \verb!blocking assignment =!: executed in the order they are specified.
     \item\verb!Nonblock assignments <=! executed in parallel.
     \item Use \verb!logic! instead of \verb!reg/wire! (4-state type)
     \item Use \verb!always_comb! for combinational, \verb!always_ff! for sequential logic
 \end{itemize}
-\newpage 
+
 \subsubsection{Case Statements}
 \begin{verbatim}
 module mux(
@@ -357,13 +326,13 @@ endmodule
 \begin{verbatim}
 # set working dir, where compiled verilog goes
 vlib work
-# compile all verilog modules in mux.v to working
+# compile all modules in mux.v to working
 # dir could also have multiple verilog files
 vlog mux.v
 #load simulation using mux as the
 # top level simulation module
 vsim mux
-#log signals and add signals to waveform window
+#log sgnls and add sgnls to waveform window
 log {/*}
 # add wave {/*} would add all items in
 # top level simulation module
@@ -379,7 +348,8 @@ run 10ns
     \item FGPA: Field Programmable Gate Array
     \item To repeat signals, use this syntax: 
     \begin{verbatim}
-force {MuxSelect[2]} 0 0ns, 1 {4ns} -r 8ns
+force {MuxSelect[2]} 0 0ns,
+1 {4ns} -r 8ns
     \end{verbatim}
     \vspace{-4mm}
     which starts at $0$ at 0ns, $1$ at 4ns, and repeats every $8$ ns.
@@ -408,10 +378,6 @@ force {MuxSelect[2]} 0 0ns, 1 {4ns} -r 8ns
         \item Celebrate!
     \end{enumerate}
 \end{multicols}
-\subsection{Step 1: State Diagram Example}
-\begin{center}
-    \includegraphics[width=0.6\linewidth]{figures/fsm.png}
-\end{center}
 \subsection{Step 2: State Table Example}
 \begin{center}
     \begin{tabular}{c|cc|c}
@@ -432,7 +398,7 @@ force {MuxSelect[2]} 0 0ns, 1 {4ns} -r 8ns
 \end{itemize}
 Alternatively use 3 flip flops to represent state codes as 000, 001, 010, etc.
 
-\newpage 
+
 
 \subsection{Step 4: State-Assigned Table Example}
 By convention, use $y$ for input and $Y$ for output.
@@ -457,16 +423,13 @@ module FSM(
     output logic z,
     output logic [3:0] CurState
 );
-
 logic [3:0] y_Q, Y_D;
-
 typedef enum logic [3:0] {
     A = 4'b0000,
     B = 4'b0001,
     // ...
     G = 4'b0110
 } state_t;
-
 always_comb begin
     case (y_Q)
         A: Y_D = w ? B : A;
@@ -475,22 +438,19 @@ always_comb begin
         default: Y_D = A;
     endcase
 end
-
 always_ff @(posedge Clock) begin
     if (!Resetn)
         y_Q <= A;
     else
         y_Q <= Y_D;
 end
-
 assign z = (y_Q == F) | (y_Q == G);
 assign CurState = y_Q;
-
 endmodule
 \end{verbatim}
 \section{RISC-V Assembly}
 \subsection{Registers}
-\vspace{-2mm}
+
 {\footnotesize
 \begin{itemize}\setlength\itemsep{-0.5em}
     \item x0 (zero): Hardwired zero, x1 (ra): Return address, x2 (sp): Stack pointer
@@ -500,8 +460,9 @@ endmodule
     \item x3 (gp): Global pointer, x4 (tp): Thread pointer
 \end{itemize}}
 \subsection{Instructions}
-Let \verb!a0=1!, \verb!a1=2!, \verb!a2=0b1010!.
+Let a0=1, a1=2, a2=0b1010.
 \begin{center}
+    {\scriptsize
     \begin{tabular}{c|c|c}
     Instruction & Example & Result \\ 
     \verb!ADDI! & \verb!addi a3, zero, 3! & \verb!a3 = 3     !\\ 
@@ -513,9 +474,10 @@ Let \verb!a0=1!, \verb!a1=2!, \verb!a2=0b1010!.
     \verb!SRAI! & \verb!srai a3, a2, 1! & \verb!a3 = 0b1101! \\
     \verb!AND! & \verb!and a3, a1, a0! & \verb!a3 = (1 and 2) = 0! \\
     \end{tabular}
+    }
 \end{center}
 \subsection{Memory Stuff}
-\vspace{-2mm}
+
 {\footnotesize
 \begin{itemize}\setlength\itemsep{-0.5em}
     \item \verb!JAL!: Jump and Link - stores return address in \verb!ra! (x1)
@@ -524,7 +486,7 @@ Let \verb!a0=1!, \verb!a1=2!, \verb!a2=0b1010!.
     \item Each instruction is 4 bytes (32-bit) in RV32.
 \end{itemize}}
 \subsection{Load and Store}
-\vspace{-2mm}
+
 {\footnotesize
 \begin{itemize}\setlength\itemsep{-0.5em}
     \item \verb!lw a0, offset(a1)!: Load word; \verb!sw a0, offset(a1)!: Store word
@@ -533,12 +495,12 @@ Let \verb!a0=1!, \verb!a1=2!, \verb!a2=0b1010!.
     \item \verb!sb! - store byte, \verb!sh! - store halfword
 \end{itemize}}
 \subsection{Conditionals}
-\vspace{-2mm}
+
 {\scriptsize
 RISC-V has no flags. Branch instructions: \verb!beq! (equal), \verb!bne! (not equal), \verb!blt/bge! (less/greater signed), \verb!bltu/bgeu! (unsigned). Set: \verb!slt!, \verb!slti!, \verb!sltu!, \verb!sltiu!.
 }
 \subsection{Interrupts}
-\vspace{-2mm}
+
 {\footnotesize
 \begin{enumerate}\setlength\itemsep{-0.5em}
     \item Set \verb!mtvec! CSR (trap vector)
@@ -552,7 +514,7 @@ RISC-V has no flags. Branch instructions: \verb!beq! (equal), \verb!bne! (not eq
 \end{enumerate}}
 \section{RISC-V Assembly Example Code}
 \subsection{Enabling Interrupts}
-\vspace{-2mm}
+
 {\scriptsize
 \begin{verbatim}
 li sp, 0x10000        # Initialize stack
@@ -567,7 +529,7 @@ li t1, 0b1001
 sw t1, 0(t0)          # Enable key3, key0
 \end{verbatim}}
 \subsection{Check Cause of Interrupt}
-\vspace{-2mm}
+
 {\scriptsize
 \begin{verbatim}
 trap_handler:
@@ -588,7 +550,6 @@ exit_trap:
     mret
 \end{verbatim}}
 \subsection{ISR Subroutine}
-\vspace{-2mm}
 {\scriptsize
 \begin{verbatim}
 key_isr:
@@ -614,7 +575,7 @@ endisr:
     ret
 \end{verbatim}}
 \subsection{Polled IO with Timer}
-\vspace{-2mm}
+
 {\scriptsize
 \begin{verbatim}
 .text
@@ -644,7 +605,7 @@ poll:
     j poll
 \end{verbatim}}
 \subsection{Exception Vector Table}
-\vspace{-2mm}
+
 {\scriptsize
 \begin{verbatim}
 .align 2
@@ -655,7 +616,7 @@ trap_vector:
 # 0x0C:Machine SW int 0x14:Supervisor timer
 \end{verbatim}}
 \subsection{Find Sum with Recursion}
-\vspace{-2mm}
+
 \begin{multicols}{2}
 {\scriptsize
 \begin{verbatim}
@@ -682,45 +643,6 @@ return:
     ret
 .data
 N: .word 5
-\end{verbatim}}
-\end{multicols}
-\subsection{Fibonacci with Recursion}
-\vspace{-2mm}
-\begin{multicols}{2}
-{\scriptsize
-\begin{verbatim}
-.data
-N: .word 10
-.text
-.globl _start
-_start:
-    li sp, 0x20000
-    la s0, N; lw a0, 0(s0)
-    li a1, 0; li a2, 0
-    jal ra, fib
-end: j end
-fib:
-    addi sp, sp, -12
-    sw a0, 0(sp); sw a2, 4(sp)
-    sw ra, 8(sp)
-    li t0, 2
-    bge a0, t0, recur
-    mv a1, a0
-    lw a0, 0(sp); lw a2, 4(sp)
-    lw ra, 8(sp)
-    addi sp, sp, 12
-    ret
-recur:
-    addi a0, a0, -1
-    jal ra, fib
-    mv a2, a1
-    addi a0, a0, -1
-    jal ra, fib
-    add a1, a1, a2
-    lw a0, 0(sp); lw a2, 4(sp)
-    lw ra, 8(sp)
-    addi sp, sp, 12
-    ret
 \end{verbatim}}
 \end{multicols}
 \end{multicols*}
